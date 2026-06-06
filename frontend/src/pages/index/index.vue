@@ -2,8 +2,11 @@
   <view class="page">
     <view class="brand">
       <image class="brand-logo" src="/static/logo.png" mode="aspectFit" />
-      <view class="brand-title">生成你的AI提示词</view>
-      <view class="brand-subtitle">4步生成，无需基础</view>
+      <view class="brand-text">
+        <view class="brand-title">源流AI提示词</view>
+        <view class="brand-subtitle">4步生成，无需基础</view>
+        <view class="brand-signature">源流数字 · SOURCEFLOW DIGITAL</view>
+      </view>
     </view>
 
     <view class="step-card">
@@ -148,19 +151,29 @@ export default {
 
 .brand {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  padding: 16rpx 0 40rpx;
+  margin: -32rpx -32rpx 32rpx;
+  padding: 40rpx 32rpx 32rpx;
+  background: #FFFFFF;
+  border-bottom: 1rpx solid #DCE5EF;
 }
 
 .brand-logo {
-  width: 156rpx;
-  height: 156rpx;
-  margin-bottom: 16rpx;
+  width: 120rpx;
+  height: 120rpx;
+  flex-shrink: 0;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-left: 24rpx;
 }
 
 .brand-title {
-  font-size: 44rpx;
+  font-size: 40rpx;
   font-weight: 700;
   line-height: 1.32;
   color: #003060;
@@ -171,9 +184,15 @@ export default {
 }
 
 .brand-subtitle {
-  margin-top: 10rpx;
-  font-size: 26rpx;
+  margin-top: 8rpx;
+  font-size: 24rpx;
   color: #6B7280;
+}
+
+.brand-signature {
+  margin-top: 8rpx;
+  font-size: 20rpx;
+  color: #9CA3AF;
 }
 
 .step-card,
