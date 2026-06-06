@@ -25,11 +25,15 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "🏠 首页"
+        "text": "首页",
+        "iconPath": "static/icons/tabbar/home.png",
+        "selectedIconPath": "static/icons/tabbar/home-active.png"
       },
       {
         "pagePath": "pages/about/index",
-        "text": "ℹ️ 关于"
+        "text": "关于",
+        "iconPath": "static/icons/tabbar/about.png",
+        "selectedIconPath": "static/icons/tabbar/about-active.png"
       }
     ]
   },
