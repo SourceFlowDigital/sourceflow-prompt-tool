@@ -155,7 +155,7 @@ export default {
   align-items: center;
   margin: -32rpx -32rpx 32rpx;
   padding: 40rpx 32rpx 32rpx;
-  background: #FFFFFF;
+  background: transparent;
   border-bottom: 1rpx solid #DCE5EF;
 }
 
