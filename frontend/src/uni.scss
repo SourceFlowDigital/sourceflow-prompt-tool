@@ -6,6 +6,35 @@
  *
  */
 
+/* 源流品牌色彩规范 */
+$color-primary: #003060;
+$color-primary-dark: #0B2F5B;
+$color-primary-hover: #004878;
+$color-accent: #2A86B8;
+$color-gold: #D6A84F;
+$color-bg: #F4F8FB;
+$color-bg-secondary: #F2F6FA;
+$color-card: #FFFFFF;
+$color-text-main: #1F2933;
+$color-text-sub: #6B7280;
+$color-text-placeholder: #9CA3AF;
+$color-border: #DCE5EF;
+$color-success: #16A085;
+$color-warning: #F59E0B;
+$color-error: #DC2626;
+
+/* 间距规范 */
+$spacing-page: 32rpx;
+$spacing-card-padding: 26rpx 28rpx;
+$spacing-card-gap: 20rpx;
+
+/* 组件规范 */
+$radius-card: 18rpx;
+$radius-btn: 18rpx;
+$radius-input: 12rpx;
+$shadow-card: 0 4rpx 24rpx rgba(0, 48, 96, 0.06);
+$shadow-btn: 0 4rpx 16rpx rgba(0, 48, 96, 0.25);
+
 /**
  * 如果你是App开发者（插件使用者），你可以通过修改这些变量来定制自己的插件主题，实现自定义主题功能
  *

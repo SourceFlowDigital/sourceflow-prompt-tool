@@ -1,0 +1,37 @@
+{
+  "id": "5184367",
+  "name": "源流政策通TabBar",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "508243",
+      "name": "关于",
+      "font_class": "guanyu",
+      "unicode": "e608",
+      "unicode_decimal": 58888
+    },
+    {
+      "icon_id": "659150",
+      "name": "ic_news",
+      "font_class": "icnews",
+      "unicode": "e630",
+      "unicode_decimal": 58928
+    },
+    {
+      "icon_id": "1304951",
+      "name": "列表",
+      "font_class": "liebiao",
+      "unicode": "e62d",
+      "unicode_decimal": 58925
+    },
+    {
+      "icon_id": "2811143",
+      "name": "订阅",
+      "font_class": "dingyue",
+      "unicode": "e63f",
+      "unicode_decimal": 58943
+    }
+  ]
+}

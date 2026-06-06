@@ -1,48 +1,318 @@
 <template>
-  <view class="content">
-    <image class="logo" src="/static/logo.png"></image>
-    <view class="text-area">
-      <text class="title">{{ title }}</text>
+  <view class="page">
+    <view class="brand">
+      <image class="brand-logo" src="/static/logo.png" mode="aspectFit" />
+      <view class="brand-title">生成你的AI提示词</view>
+      <view class="brand-subtitle">4步生成，无需基础</view>
+    </view>
+
+    <view class="step-card">
+      <view class="step-title">① 选择使用场景</view>
+      <picker :range="categoryNames" :value="categoryIndex" @change="onCategoryChange">
+        <view :class="['picker-field', { placeholder: categoryIndex < 0 }]">
+          <text>{{ selectedCategory ? selectedCategory.name : '请选择场景' }}</text>
+          <text class="arrow">›</text>
+        </view>
+      </picker>
+    </view>
+
+    <view v-if="selectedCategory" class="step-card">
+      <view class="step-title">② 选择角色</view>
+      <picker :range="roleOptions" :value="roleIndex" @change="onRoleChange">
+        <view :class="['picker-field', { placeholder: roleIndex < 0 }]">
+          <text class="picker-text">{{ selectedRole ? formatRole(selectedRole) : '请选择角色' }}</text>
+          <text class="arrow">›</text>
+        </view>
+      </picker>
+    </view>
+
+    <view v-if="selectedRole" class="step-card">
+      <view class="step-title">③ 定义AI的身份</view>
+      <input
+        v-model="aiIdentity"
+        class="text-input"
+        maxlength="50"
+        placeholder="请输入AI身份"
+        placeholder-class="input-placeholder"
+        @input="resetResult"
+      />
+      <view class="field-hint">可直接使用默认身份，或自行修改</view>
+    </view>
+
+    <view v-if="aiIdentity.trim()" class="step-card">
+      <view class="step-title">④ 描述你的任务</view>
+      <view class="textarea-wrap">
+        <textarea
+          v-model="task"
+          class="task-textarea"
+          maxlength="200"
+          placeholder="请描述你希望AI帮你完成的任务，越具体效果越好"
+          placeholder-class="input-placeholder"
+          @input="resetResult"
+        />
+        <view class="counter">{{ task.length }}/200字</view>
+      </view>
+      <button v-if="task.trim()" class="primary-btn" @tap="generatePrompt">生成提示词</button>
+    </view>
+
+    <view v-if="generatedPrompt" class="result-card">
+      <view class="result-title">你的提示词已生成</view>
+      <view class="result-content">{{ generatedPrompt }}</view>
+      <button :class="['copy-btn', { copied }]" @tap="copyPrompt">
+        {{ copied ? '已复制 ✓' : '一键复制' }}
+      </button>
     </view>
   </view>
 </template>
 
 <script>
+import categories from '../../data/categories.js'
+import roles from '../../data/roles.js'
+
 export default {
   data() {
     return {
-      title: 'Hello',
+      categories,
+      roles,
+      categoryIndex: -1,
+      roleIndex: -1,
+      aiIdentity: '',
+      task: '',
+      generatedPrompt: '',
+      copied: false,
     }
   },
-  onLoad() {},
-  methods: {},
+  computed: {
+    categoryNames() {
+      return this.categories.map((category) => category.name)
+    },
+    selectedCategory() {
+      return this.categoryIndex >= 0 ? this.categories[this.categoryIndex] : null
+    },
+    filteredRoles() {
+      if (!this.selectedCategory) return []
+      return this.roles.filter((role) => role.category_id === this.selectedCategory.id)
+    },
+    roleOptions() {
+      return this.filteredRoles.map((role) => this.formatRole(role))
+    },
+    selectedRole() {
+      return this.roleIndex >= 0 ? this.filteredRoles[this.roleIndex] : null
+    },
+  },
+  methods: {
+    formatRole(role) {
+      const desc = role.desc.length > 20 ? `${role.desc.slice(0, 20)}...` : role.desc
+      return `${role.name}——${desc}`
+    },
+    onCategoryChange(event) {
+      this.categoryIndex = Number(event.detail.value)
+      this.roleIndex = -1
+      this.aiIdentity = ''
+      this.task = ''
+      this.resetResult()
+    },
+    onRoleChange(event) {
+      this.roleIndex = Number(event.detail.value)
+      this.aiIdentity = this.selectedRole.name
+      this.task = ''
+      this.resetResult()
+    },
+    resetResult() {
+      this.generatedPrompt = ''
+      this.copied = false
+    },
+    generatePrompt() {
+      this.generatedPrompt = `你是一位${this.aiIdentity.trim()}。\n你的任务是：${this.task.trim()}。\n请以专业、清晰的方式完成这个任务。`
+      this.copied = false
+    },
+    copyPrompt() {
+      uni.setClipboardData({
+        data: this.generatedPrompt,
+        success: () => {
+          this.copied = true
+        },
+      })
+    },
+  },
 }
 </script>
 
 <style>
-.content {
+.page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 32rpx 32rpx 180rpx;
+  background: #F4F8FB;
+}
+
+.brand {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  padding: 16rpx 0 40rpx;
 }
 
-.logo {
-  height: 200rpx;
-  width: 200rpx;
-  margin-top: 200rpx;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 50rpx;
+.brand-logo {
+  width: 156rpx;
+  height: 156rpx;
+  margin-bottom: 16rpx;
 }
 
-.text-area {
+.brand-title {
+  font-size: 44rpx;
+  font-weight: 700;
+  line-height: 1.32;
+  color: #003060;
+  background: linear-gradient(135deg, #E8C060, #003060);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-subtitle {
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  color: #6B7280;
+}
+
+.step-card,
+.result-card {
+  box-sizing: border-box;
+  margin-bottom: 20rpx;
+  padding: 26rpx 28rpx;
+  background: #FFFFFF;
+  border: 1rpx solid #DCE5EF;
+  border-radius: 18rpx;
+  box-shadow: 0 4rpx 24rpx rgba(0, 48, 96, 0.06);
+}
+
+.step-title,
+.result-title {
+  margin-bottom: 20rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #003060;
+}
+
+.picker-field,
+.text-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 80rpx;
+  padding: 0 20rpx;
+  background: #F2F6FA;
+  border: 1rpx solid #DCE5EF;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #1F2933;
+}
+
+.picker-field {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.title {
-  font-size: 36rpx;
-  color: #8f8f94;
+.picker-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placeholder,
+.input-placeholder {
+  color: #9CA3AF;
+}
+
+.arrow {
+  margin-left: 20rpx;
+  font-size: 34rpx;
+  color: #9CA3AF;
+}
+
+.field-hint {
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  color: #9CA3AF;
+}
+
+.textarea-wrap {
+  position: relative;
+  box-sizing: border-box;
+  padding: 20rpx 20rpx 52rpx;
+  background: #F2F6FA;
+  border: 1rpx solid #DCE5EF;
+  border-radius: 12rpx;
+}
+
+.task-textarea {
+  width: 100%;
+  min-height: 160rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: #1F2933;
+}
+
+.counter {
+  position: absolute;
+  right: 20rpx;
+  bottom: 16rpx;
+  font-size: 22rpx;
+  color: #9CA3AF;
+}
+
+.primary-btn,
+.copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 24rpx;
+  border-radius: 18rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.primary-btn {
+  height: 88rpx;
+  color: #FFFFFF;
+  background: #003060;
+  box-shadow: 0 4rpx 16rpx rgba(0, 48, 96, 0.25);
+}
+
+.primary-btn::after,
+.copy-btn::after {
+  border: 0;
+}
+
+.result-card {
+  border-left: 6rpx solid #003060;
+}
+
+.result-content {
+  padding: 20rpx;
+  background: #F2F6FA;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+  line-height: 1.75;
+  color: #1F2933;
+  white-space: pre-line;
+}
+
+.copy-btn {
+  height: 80rpx;
+  color: #003060;
+  background: #FFFFFF;
+  border: 1rpx solid #003060;
+  box-shadow: none;
+}
+
+.copy-btn.copied {
+  color: #16A085;
+  border-color: #16A085;
 }
 </style>
