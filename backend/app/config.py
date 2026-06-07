@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
 
 
@@ -9,6 +11,10 @@ class Settings(BaseSettings):
     DATABASE_URL: str = ""
     JWT_SECRET: str = "dev-secret-change-in-production"
     DAILY_FREE_QUOTA: int = 5
+
+    class Config:
+        env_file = Path(__file__).resolve().parents[1] / ".env"
+        env_file_encoding = "utf-8"
 
 
 settings = Settings()

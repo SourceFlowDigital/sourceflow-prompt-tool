@@ -18,7 +18,7 @@ app.add_middleware(
 app.include_router(router)
 app.include_router(auth.router, prefix="/api/auth")
 app.include_router(auth.me_router, prefix="/api")
-app.include_router(prompt.router, prefix="/api/prompt")
+app.include_router(prompt.router)
 app.include_router(quota.router, prefix="/api/quota")
 
 
