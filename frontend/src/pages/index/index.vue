@@ -113,20 +113,40 @@
             <view class="advanced-info">
               <view class="advanced-name">AI增强优化</view>
               <view class="advanced-desc">
-                调用 DeepSeek 对基础提示词进一步优化，让提示词更具体、更完整、更专业。
+                将调用 AI 对基础提示词进行结构化优化，让提示词更具体、更完整、更专业。
               </view>
-              <view class="advanced-hint">该功能需要付费或消耗次数，当前暂未开放。</view>
+              <view class="advanced-hint">
+                正式上线后该功能需付费/消耗次数。当前 MVP 暂不做真实扣费。
+              </view>
             </view>
-            <switch :checked="false" disabled color="#003060" class="advanced-switch" />
+            <switch
+              :checked="advancedEnabled"
+              color="#003060"
+              class="advanced-switch"
+              @change="onAdvancedChange"
+            />
           </view>
-          <view class="advanced-status">付费功能，暂未开放</view>
+          <view v-if="advancedEnabled" class="advanced-status advanced-status-active">
+            已开启 AI 增强优化
+          </view>
         </view>
       </view>
-      <button v-if="task.trim()" class="primary-btn" @tap="generatePrompt">生成提示词</button>
+      <button
+        v-if="task.trim()"
+        class="primary-btn"
+        :disabled="optimizing"
+        :loading="optimizing"
+        @tap="generatePrompt"
+      >
+        {{ optimizing ? 'AI 优化中…' : '生成提示词' }}
+      </button>
     </view>
 
     <view v-if="generatedPrompt" class="result-card">
-      <view class="result-title">你的提示词已生成</view>
+      <view class="result-title-row">
+        <view class="result-title">你的提示词已生成</view>
+        <view v-if="usedAdvancedOptimize" class="result-badge">已使用 AI 增强优化</view>
+      </view>
       <view class="result-content">{{ generatedPrompt }}</view>
       <button :class="['copy-btn', { copied }]" @tap="copyPrompt">
         {{ copied ? '已复制 ✓' : '一键复制' }}
@@ -139,6 +159,7 @@
 <script>
 import categories from '../../data/categories.js'
 import roles from '../../data/roles.js'
+import { optimizePrompt } from '../../utils/request.js'
 
 const STANDARD_SCENES = [
   {
@@ -206,6 +227,9 @@ export default {
       task: '',
       generatedPrompt: '',
       copied: false,
+      advancedEnabled: false,
+      optimizing: false,
+      usedAdvancedOptimize: false,
     }
   },
   created() {
@@ -289,16 +313,23 @@ export default {
     resetResult() {
       this.generatedPrompt = ''
       this.copied = false
+      this.usedAdvancedOptimize = false
     },
-    generatePrompt() {
-      if (this.sceneMode === 'custom' && !this.customSceneText.trim()) {
-        uni.showToast({
-          title: '请输入自定义应用场景',
-          icon: 'none',
-        })
-        return
+    onAdvancedChange(event) {
+      this.advancedEnabled = Boolean(event.detail.value)
+      this.resetResult()
+    },
+    getScenarioLabel() {
+      if (this.sceneMode === 'standard' && this.selectedSceneId) {
+        const scene = this.standardScenes.find((item) => item.scene_id === this.selectedSceneId)
+        return scene ? scene.scene_name : ''
       }
-
+      if (this.sceneMode === 'custom' && this.customSceneText.trim()) {
+        return this.customSceneText.trim()
+      }
+      return ''
+    },
+    buildBasePrompt() {
       const parts = [`你是一名${this.selectedRole.name}`]
 
       if (this.sceneMode === 'standard' && this.selectedSceneId) {
@@ -314,8 +345,71 @@ export default {
       parts.push(`你的任务是：${this.task.trim()}`)
       parts.push('请以专业、清晰的方式完成这个任务。')
 
-      this.generatedPrompt = parts.join('\n')
+      return parts.join('\n')
+    },
+    applyBasePromptFallback(basePrompt, toastTitle) {
+      this.generatedPrompt = basePrompt
+      this.usedAdvancedOptimize = false
       this.copied = false
+      if (toastTitle) {
+        uni.showToast({
+          title: toastTitle,
+          icon: 'none',
+        })
+      }
+    },
+    async generatePrompt() {
+      if (this.optimizing) return
+
+      if (this.sceneMode === 'custom' && !this.customSceneText.trim()) {
+        uni.showToast({
+          title: '请输入自定义应用场景',
+          icon: 'none',
+        })
+        return
+      }
+
+      const basePrompt = this.buildBasePrompt()
+
+      if (!this.advancedEnabled) {
+        this.generatedPrompt = basePrompt
+        this.usedAdvancedOptimize = false
+        this.copied = false
+        return
+      }
+
+      this.optimizing = true
+      this.generatedPrompt = ''
+      this.usedAdvancedOptimize = false
+      this.copied = false
+
+      try {
+        const data = await optimizePrompt({
+          base_prompt: basePrompt,
+          role_name: this.selectedRole ? this.selectedRole.name : '',
+          scenario: this.getScenarioLabel(),
+          task: this.task.trim(),
+        })
+
+        if (data.ok && data.optimized_prompt && data.optimized_prompt.trim()) {
+          this.generatedPrompt = data.optimized_prompt.trim()
+          this.usedAdvancedOptimize = true
+          this.copied = false
+          return
+        }
+
+        this.applyBasePromptFallback(
+          basePrompt,
+          data.error || 'AI 优化失败，已为你生成基础提示词',
+        )
+      } catch (error) {
+        this.applyBasePromptFallback(
+          basePrompt,
+          'AI 优化服务暂不可用，已为你生成基础提示词',
+        )
+      } finally {
+        this.optimizing = false
+      }
     },
     copyPrompt() {
       uni.setClipboardData({
@@ -406,6 +500,30 @@ export default {
   margin-bottom: 20rpx;
   font-size: 30rpx;
   font-weight: 600;
+  color: #003060;
+}
+
+.result-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.result-title-row .result-title {
+  margin-bottom: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.result-badge {
+  flex-shrink: 0;
+  padding: 6rpx 14rpx;
+  background: #F4F8FB;
+  border: 1rpx solid #D6A84F;
+  border-radius: 999rpx;
+  font-size: 20rpx;
   color: #003060;
 }
 
@@ -655,6 +773,14 @@ export default {
   border-top: 1rpx solid #E5E7EB;
   font-size: 22rpx;
   color: #9CA3AF;
+}
+
+.advanced-status-active {
+  color: #003060;
+}
+
+.primary-btn[disabled] {
+  opacity: 0.72;
 }
 
 .counter {
