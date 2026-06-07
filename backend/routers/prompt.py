@@ -1,11 +1,16 @@
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from services.deepseek import DeepSeekError, optimize_prompt
 
 router = APIRouter(prefix="/api/prompt", tags=["prompt"])
+
+MAX_BASE_PROMPT_LENGTH = 6000
 
 
 class BuildRequest(BaseModel):
@@ -81,4 +86,59 @@ async def build_prompt(req: BuildRequest, db: Session = Depends(get_db)):
         role_name=role_name,
         prompt=prompt.strip(),
         mode="basic",
+    )
+
+
+class OptimizeRequest(BaseModel):
+    base_prompt: str
+    role_name: str | None = None
+    scenario: str | None = None
+    task: str | None = None
+
+
+class UsageInfo(BaseModel):
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+    total_tokens: int | None = None
+
+
+class OptimizeSuccessResponse(BaseModel):
+    ok: Literal[True] = True
+    mode: Literal["advanced"] = "advanced"
+    optimized_prompt: str
+    provider: Literal["deepseek"] = "deepseek"
+    model: str
+    usage: UsageInfo
+
+
+class OptimizeErrorResponse(BaseModel):
+    ok: Literal[False] = False
+    error: str
+
+
+@router.post(
+    "/optimize",
+    response_model=OptimizeSuccessResponse | OptimizeErrorResponse,
+)
+async def optimize_prompt_endpoint(req: OptimizeRequest):
+    base_prompt = req.base_prompt.strip()
+    if not base_prompt:
+        return OptimizeErrorResponse(error="基础提示词不能为空")
+    if len(base_prompt) > MAX_BASE_PROMPT_LENGTH:
+        return OptimizeErrorResponse(error="提示词内容过长，请缩短后再试")
+
+    try:
+        optimized_prompt, model, usage = await optimize_prompt(
+            base_prompt,
+            role_name=req.role_name,
+            scenario=req.scenario,
+            task=req.task,
+        )
+    except DeepSeekError as exc:
+        return OptimizeErrorResponse(error=str(exc))
+
+    return OptimizeSuccessResponse(
+        optimized_prompt=optimized_prompt,
+        model=model,
+        usage=UsageInfo(**usage),
     )
