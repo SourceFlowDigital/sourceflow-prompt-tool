@@ -33,15 +33,22 @@
 
     <view v-if="selectedCategory" class="step-card">
       <view class="step-title">② 选择角色</view>
-      <view class="role-list">
+      <view class="category-trigger" @tap="toggleRoleList">
+        <text class="role-trigger-name">{{ selectedRole ? selectedRole.name : '' }}</text>
+        <text class="category-arrow">{{ roleListOpen ? '▴' : '▾' }}</text>
+      </view>
+      <view v-if="selectedRole && !roleListOpen" class="role-summary">
+        {{ selectedRole.desc }}
+      </view>
+      <view v-if="roleListOpen" class="category-list">
         <view
           v-for="(role, index) in filteredRoles"
           :key="role.id"
-          :class="['role-option', { selected: roleIndex === index }]"
+          :class="['category-option', { selected: roleIndex === index }]"
           @tap="selectRole(index)"
         >
-          <view class="role-option-name">{{ role.name }}</view>
-          <view class="role-option-desc">{{ role.desc }}</view>
+          <view class="category-option-name">{{ role.name }}</view>
+          <view class="category-option-description">{{ role.desc }}</view>
         </view>
       </view>
     </view>
@@ -69,17 +76,17 @@
           <text class="scene-chip-name">+ 自定义</text>
         </view>
         <view v-if="sceneMode === 'custom'" class="custom-inline-input">
-          <view class="inline-input-wrap">
+          <view class="inline-input-wrap inline-input-wrap-custom">
             <textarea
               v-model="customSceneText"
-              class="inline-textarea"
+              class="inline-textarea inline-textarea-custom"
               auto-height
               maxlength="50"
               placeholder="请输入你的具体用途，例如：准备客户汇报、写朋友圈文案、整理竞品分析"
               placeholder-class="input-placeholder"
               @input="resetResult"
             />
-            <view class="counter">{{ customSceneText.length }}/50字</view>
+            <view class="counter counter-below">{{ customSceneText.length }}/50字</view>
           </view>
         </view>
       </view>
@@ -191,6 +198,7 @@ export default {
       roles,
       categoryIndex: -1,
       categoryListOpen: false,
+      roleListOpen: false,
       roleIndex: -1,
       sceneMode: 'standard',
       selectedSceneId: 'content_creation',
@@ -219,6 +227,9 @@ export default {
     toggleCategoryList() {
       this.categoryListOpen = !this.categoryListOpen
     },
+    toggleRoleList() {
+      this.roleListOpen = !this.roleListOpen
+    },
     getCategoryDescription(category) {
       if (category.description) return category.description
       return category.subcategories.map((subcategory) => subcategory.name).join('、')
@@ -230,14 +241,17 @@ export default {
     selectCategory(index) {
       this.categoryIndex = index
       this.categoryListOpen = false
-      this.roleIndex = -1
+      this.roleListOpen = false
       this.customSceneText = ''
       this.resetSceneSelection()
       this.task = ''
       this.resetResult()
+      const roles = this.roles.filter((role) => role.category_id === this.categories[index].id)
+      this.roleIndex = roles.length > 0 ? 0 : -1
     },
     selectRole(index) {
       this.roleIndex = index
+      this.roleListOpen = false
       this.customSceneText = ''
       this.resetSceneSelection()
       this.task = ''
@@ -462,48 +476,15 @@ export default {
   color: #9CA3AF;
 }
 
-.role-list {
+.role-trigger-name {
+  flex: 1;
   overflow: hidden;
-  border: 1rpx solid #DCE5EF;
-  border-radius: 16rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.role-option {
-  position: relative;
-  box-sizing: border-box;
-  padding: 20rpx 24rpx;
-  border-bottom: 1rpx solid #E5E7EB;
-  background: #FFFFFF;
-}
-
-.role-option:last-child {
-  border-bottom: 0;
-}
-
-.role-option.selected {
-  padding-left: 30rpx;
-  background: #F4F8FB;
-}
-
-.role-option.selected::before {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 6rpx;
-  content: '';
-  background: #003060;
-}
-
-.role-option-name {
-  font-size: 26rpx;
-  font-weight: 500;
-  line-height: 1.4;
-  color: #003060;
-}
-
-.role-option-desc {
-  margin-top: 6rpx;
+.role-summary {
+  margin-top: 10rpx;
   font-size: 22rpx;
   line-height: 1.45;
   color: #9CA3AF;
@@ -547,12 +528,20 @@ export default {
 }
 
 .scene-chip-custom {
-  width: calc(50% - 16rpx);
+  width: calc(100% - 16rpx);
   margin: 8rpx;
+  border-style: dashed;
+}
+
+.scene-chip-custom.selected {
+  border-style: solid;
 }
 
 .custom-inline-input {
-  margin: 0 8rpx;
+  width: 100%;
+  margin-top: 4rpx;
+  padding: 0 8rpx;
+  box-sizing: border-box;
 }
 
 .placeholder,
@@ -569,6 +558,10 @@ export default {
   border-radius: 12rpx;
 }
 
+.inline-input-wrap-custom {
+  padding: 16rpx 20rpx 12rpx;
+}
+
 .inline-textarea {
   display: block;
   width: 100%;
@@ -577,6 +570,16 @@ export default {
   line-height: 1.5;
   color: #1F2933;
   word-break: break-all;
+}
+
+.inline-textarea-custom {
+  min-height: 80rpx;
+}
+
+.counter-below {
+  position: static;
+  margin-top: 10rpx;
+  text-align: right;
 }
 
 .advanced-options {
