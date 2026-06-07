@@ -31,7 +31,7 @@
       </view>
     </view>
 
-    <view v-if="selectedCategory" class="step-card">
+    <view class="step-card">
       <view class="step-title">② 选择角色</view>
       <view class="category-trigger" @tap="toggleRoleList">
         <text class="role-trigger-name">{{ selectedRole ? selectedRole.name : '' }}</text>
@@ -53,7 +53,7 @@
       </view>
     </view>
 
-    <view v-if="selectedRole" class="step-card">
+    <view class="step-card">
       <view class="step-header">
         <view class="step-title step-title-inline">③ 选择应用场景（可选）</view>
         <text class="skip-link" @tap="skipScene">跳过 →</text>
@@ -92,19 +92,19 @@
       </view>
     </view>
 
-    <view v-if="selectedRole" class="step-card">
+    <view class="step-card">
       <view class="step-title">④ 描述你的任务</view>
-      <view class="inline-input-wrap">
+      <view class="inline-input-wrap inline-input-wrap-custom">
         <textarea
           v-model="task"
-          class="inline-textarea"
+          class="inline-textarea inline-textarea-custom"
           auto-height
           maxlength="200"
           placeholder="请描述你希望AI帮你完成的任务，越具体效果越好"
           placeholder-class="input-placeholder"
           @input="resetResult"
         />
-        <view class="counter">{{ task.length }}/200字</view>
+        <view class="counter counter-below">{{ task.length }}/200字</view>
       </view>
       <view class="advanced-options">
         <view class="advanced-label">高级选项</view>
@@ -196,10 +196,10 @@ export default {
     return {
       categories,
       roles,
-      categoryIndex: -1,
+      categoryIndex: 0,
       categoryListOpen: false,
       roleListOpen: false,
-      roleIndex: -1,
+      roleIndex: 0,
       sceneMode: 'standard',
       selectedSceneId: 'content_creation',
       customSceneText: '',
@@ -207,6 +207,9 @@ export default {
       generatedPrompt: '',
       copied: false,
     }
+  },
+  created() {
+    this.syncRoleToCategory(this.categoryIndex)
   },
   computed: {
     standardScenes() {
@@ -234,6 +237,15 @@ export default {
       if (category.description) return category.description
       return category.subcategories.map((subcategory) => subcategory.name).join('、')
     },
+    getRolesForCategory(categoryIndex) {
+      const category = this.categories[categoryIndex]
+      if (!category) return []
+      return this.roles.filter((role) => role.category_id === category.id)
+    },
+    syncRoleToCategory(categoryIndex) {
+      const roles = this.getRolesForCategory(categoryIndex)
+      this.roleIndex = roles.length > 0 ? 0 : -1
+    },
     resetSceneSelection() {
       this.sceneMode = 'standard'
       this.selectedSceneId = 'content_creation'
@@ -246,8 +258,7 @@ export default {
       this.resetSceneSelection()
       this.task = ''
       this.resetResult()
-      const roles = this.roles.filter((role) => role.category_id === this.categories[index].id)
-      this.roleIndex = roles.length > 0 ? 0 : -1
+      this.syncRoleToCategory(index)
     },
     selectRole(index) {
       this.roleIndex = index
