@@ -55,14 +55,28 @@
 
     <view class="info-card">
       <view class="card-title">联系我们</view>
-      <view class="contact-item">技术支持：源流数字</view>
-      <view class="contact-item">联系邮箱：待补充</view>
-      <view class="contact-item">联系电话：待补充</view>
+      <view class="contact-item">技术支持：宁夏源流数字服务有限公司</view>
+      <view class="contact-item">联系邮箱：sourceflowdigital@163.com</view>
+    </view>
+
+    <view class="protocol-links">
+      <view class="protocol-link" data-url="#" @click="showProtocolNotice">用户协议</view>
+      <view class="protocol-link" data-url="#" @click="showProtocolNotice">隐私政策</view>
+      <view class="protocol-link" data-url="#" @click="showProtocolNotice">微信小程序隐私保护指引</view>
     </view>
 
     <view class="copyright">© 2026 宁夏源流数字服务有限公司</view>
   </view>
 </template>
+
+<script setup lang="ts">
+const showProtocolNotice = () => {
+  uni.showToast({
+    title: '协议页面建设中，敬请期待',
+    icon: 'none'
+  })
+}
+</script>
 
 <style>
 .about-page {
@@ -188,8 +202,21 @@
   color: #2A86B8;
 }
 
-.copyright {
+.protocol-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12rpx 24rpx;
   margin-top: 32rpx;
+}
+
+.protocol-link {
+  font-size: 22rpx;
+  color: #2A86B8;
+}
+
+.copyright {
+  margin-top: 20rpx;
   font-size: 22rpx;
   text-align: center;
   color: #9CA3AF;
