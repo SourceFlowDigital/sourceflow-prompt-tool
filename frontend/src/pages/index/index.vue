@@ -11,12 +11,24 @@
 
     <view class="step-card">
       <view class="step-title">① 选择使用场景</view>
-      <picker :range="categoryNames" :value="categoryIndex" @change="onCategoryChange">
-        <view :class="['picker-field', { placeholder: categoryIndex < 0 }]">
-          <text>{{ selectedCategory ? selectedCategory.name : '请选择场景' }}</text>
-          <text class="arrow">›</text>
+      <view
+        :class="['category-trigger', { placeholder: categoryIndex < 0 }]"
+        @tap="toggleCategoryList"
+      >
+        <text>{{ selectedCategory ? selectedCategory.name : '请选择场景' }}</text>
+        <text class="category-arrow">{{ categoryListOpen ? '▴' : '▾' }}</text>
+      </view>
+      <view v-if="categoryListOpen" class="category-list">
+        <view
+          v-for="(category, index) in categories"
+          :key="category.id"
+          :class="['category-option', { selected: categoryIndex === index }]"
+          @tap="selectCategory(index)"
+        >
+          <view class="category-option-name">{{ category.name }}</view>
+          <view class="category-option-description">{{ getCategoryDescription(category) }}</view>
         </view>
-      </picker>
+      </view>
     </view>
 
     <view v-if="selectedCategory" class="step-card">
@@ -78,6 +90,7 @@ export default {
       categories,
       roles,
       categoryIndex: -1,
+      categoryListOpen: false,
       roleIndex: -1,
       aiIdentity: '',
       task: '',
@@ -86,9 +99,6 @@ export default {
     }
   },
   computed: {
-    categoryNames() {
-      return this.categories.map((category) => category.name)
-    },
     selectedCategory() {
       return this.categoryIndex >= 0 ? this.categories[this.categoryIndex] : null
     },
@@ -108,8 +118,16 @@ export default {
       const desc = role.desc.length > 20 ? `${role.desc.slice(0, 20)}...` : role.desc
       return `${role.name}——${desc}`
     },
-    onCategoryChange(event) {
-      this.categoryIndex = Number(event.detail.value)
+    toggleCategoryList() {
+      this.categoryListOpen = !this.categoryListOpen
+    },
+    getCategoryDescription(category) {
+      if (category.description) return category.description
+      return category.subcategories.map((subcategory) => subcategory.name).join('、')
+    },
+    selectCategory(index) {
+      this.categoryIndex = index
+      this.categoryListOpen = false
       this.roleIndex = -1
       this.aiIdentity = ''
       this.task = ''
@@ -215,6 +233,7 @@ export default {
 }
 
 .picker-field,
+.category-trigger,
 .text-input {
   box-sizing: border-box;
   width: 100%;
@@ -231,6 +250,69 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.category-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FFFFFF;
+  border: 1rpx solid #DCE5EF;
+  border-radius: 16rpx;
+}
+
+.category-arrow {
+  margin-left: 20rpx;
+  font-size: 24rpx;
+  color: #9CA3AF;
+}
+
+.category-list {
+  margin-top: 12rpx;
+  overflow: hidden;
+  background: #FFFFFF;
+  border: 1rpx solid #D6A84F;
+  border-radius: 16rpx;
+}
+
+.category-option {
+  position: relative;
+  box-sizing: border-box;
+  padding: 20rpx 24rpx;
+  border-bottom: 1rpx solid #E5E7EB;
+}
+
+.category-option:last-child {
+  border-bottom: 0;
+}
+
+.category-option.selected {
+  padding-left: 30rpx;
+  background: #F4F8FB;
+}
+
+.category-option.selected::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 6rpx;
+  content: '';
+  background: #003060;
+}
+
+.category-option-name {
+  font-size: 26rpx;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #003060;
+}
+
+.category-option-description {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  line-height: 1.45;
+  color: #9CA3AF;
 }
 
 .picker-text {
